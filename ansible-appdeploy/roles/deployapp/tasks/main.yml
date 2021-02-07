@@ -1,0 +1,40 @@
+---
+- name: Creates directory
+  become: yes
+  file:
+    path: /mvn/artefact/
+    state: directory
+- name: copy jar file
+  become: yes
+  copy:
+    src: /mvn/artefact/spring-petclinic-2.4.2.jar
+    dest: /mvn/artefact/spring-petclinic-2.4.2.jar   
+- name: link to the newly deployed app
+  become: yes
+  file: 
+    src: /mvn/artefact/spring-petclinic-2.4.2.jar 
+    dest: /etc/init.d/spring-petclinic 
+    state: link
+- name: create spring-petclinic service file
+  become: yes
+  file:
+    path: /etc/systemd/system/spring-petclinic.service
+    owner: root
+    group: root
+    state: touch
+- name: create service file
+  become: yes
+  blockinfile:
+    path: /etc/systemd/system/spring-petclinic.service
+    content: |
+       [Unit]
+       Description=<Description>
+       [Service]
+       ExecStart=/usr/bin/java -jar /mvn/artefact/spring-petclinic-2.4.2.jar
+       [Install]
+       WantedBy=multi-user.target
+- name: deploy app
+  become: yes
+  service:
+    name: spring-petclinic
+    state: started

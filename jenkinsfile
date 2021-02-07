@@ -1,0 +1,18 @@
+pipeline {
+   agent any
+   stages {
+      stage('Build') {
+         agent none
+         steps {
+            sh 'ls'
+            sh './mvnw package'
+            }
+      }
+      stage('Deploy') {
+          steps {
+              sh 'mkdir -p /mvn/artefact/'
+              sh 'cp -r target/spring-petclinic*.jar /mvn/artefact/'
+          }
+      }
+   }
+}

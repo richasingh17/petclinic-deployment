@@ -1,0 +1,7 @@
+---
+- name: Deploy spring petclinic app
+  hosts: tag_Name_LoyLogic_Application
+  gather_facts: true
+  roles:
+  - deployapp
+
