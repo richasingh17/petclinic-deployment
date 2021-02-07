@@ -1,0 +1,193 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "This template deploy 2 EC2 instances, one with jenkins and ansible and the other with JDK",
+    "Parameters": {
+		"KeyPairName": {
+            "Description": "Enter a key pair.",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "InstanceImageID": {
+            "Description": "Image ID for the OS to be utilised in the instance",
+            "Type": "String"
+        },
+        "SecurityGroupID": {
+            "Description": "Security group for the application",
+            "Type": "AWS::EC2::SecurityGroup::Id"
+        },
+        "JenkinsInstanceSubnetID": {
+            "Description": "Subnet ID in which to launch the jenkins/ansible instance",
+            "Type": "String"
+        },
+        "ApplicationInstanceSubnetID": {
+            "Description": "Subnet ID in which to launch the application instance",
+            "Type": "String"
+        },
+        "ResourceName": {
+            "Description": "Please enter the resource name",
+            "Type": "String"
+        },
+        "InstanceType": {
+            "Description": "EC2 instance type",
+            "Type": "String",
+            "Default": "t2.micro",
+            "AllowedValues": [
+                "t1.micro",
+                "t2.micro",
+                "t2.small",
+                "t2.medium",
+                "m1.small",
+                "m1.medium",
+                "m1.large",
+                "m1.xlarge",
+                "m2.xlarge",
+                "m2.2xlarge",
+                "m2.4xlarge",
+                "m3.medium",
+                "m3.large",
+                "m3.xlarge",
+                "m3.2xlarge",
+                "c1.medium",
+                "c1.xlarge",
+                "c3.large",
+                "c3.xlarge",
+                "c3.2xlarge",
+                "c3.4xlarge",
+                "c3.8xlarge",
+                "g2.2xlarge",
+                "r3.large",
+                "r3.xlarge",
+                "r3.2xlarge",
+                "r3.4xlarge",
+                "r3.8xlarge",
+                "i2.xlarge",
+                "i2.2xlarge",
+                "i2.4xlarge",
+                "i2.8xlarge",
+                "hi1.4xlarge",
+                "hs1.8xlarge",
+                "cr1.8xlarge",
+                "cc2.8xlarge",
+                "cg1.4xlarge"
+            ],
+            "ConstraintDescription": "must be a valid EC2 instance type."
+        }
+    },
+    "Resources": {
+        "JenkinsInstance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+				"KeyName": {
+                    "Ref": "KeyPairName"
+                },
+                "ImageId": {
+                    "Ref": "InstanceImageID"
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Ref": "SecurityGroupID"
+                    }
+                ],
+                "SubnetId" : {
+                    "Ref": "JenkinsInstanceSubnetID"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${ResourceName}_Jenkins"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -xe\n",
+                                "apt-get -y update && apt-get -y upgrade\n",
+                                "apt install -y openjdk-8-jdk\n",
+                                "wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -\n",
+                                "sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'\n",
+                                "apt update\n",
+                                "apt install jenkins -y\n",
+                                "apt-get install python3 -y\n",
+                                "apt install python3-pip -y\n",
+                                "pip3 install boto3\n",
+                                "echo \"alias python=python3\" >> ~/.bash_aliases\n",
+                                "source ~/.bash_aliases\n",
+                                "apt install ansible\n",
+                                "\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "ApplicationInstance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+				"KeyName": {
+                    "Ref": "KeyPairName"
+                },
+                "ImageId": {
+                    "Ref": "InstanceImageID"
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Ref": "SecurityGroupID"
+                    }
+                ],
+                "SubnetId" : {
+                    "Ref": "ApplicationInstanceSubnetID"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${ResourceName}_Application"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -xe\n",
+                                "apt-get -y update && apt-get -y upgrade\n",
+                                "apt install -y openjdk-8-jdk\n",
+                                "\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "WebsiteURL": {
+            "Description": "Jenkins URL",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "http://",
+                        {
+                            "Fn::GetAtt": [
+                                "JenkinsInstance",
+                                "PublicDnsName"
+                            ]
+                        },
+                        "/8080"
+                    ]
+                ]
+            }
+        }
+    }
+}

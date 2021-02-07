@@ -1,0 +1,226 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Master template to deploy AWS networking with one build & release instance and one application instance",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Network Configuration"
+                    },
+                    "Parameters": [
+                        "MasterVPCCIDR",
+                        "MasterPublicSubnetCIDR",
+                        "MasterPrivateSubnetCIDR",
+                        "MasterResourceName"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "EC2 Configuration"
+                    },
+                    "Parameters": [
+                        "MasterKeyPairName",
+                        "MasterInstanceImageID",
+                        "MasterInstanceType"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "MasterVPCCIDR": {
+                    "default": "Vpc CIDR"
+                },
+                "MasterPublicSubnetCIDR": {
+                    "default": "Public Subnet CIDR"
+                },
+                "MasterPrivateSubnetCIDR": {
+                    "default": "Private Subnet CIDR"
+                },
+                "MasterResourceName": {
+                    "default": "Resource Name"
+                },
+                "MasterKeyPairName": {
+                    "default": "Key Pair Name"
+                },
+                "MasterInstanceImageID": {
+                    "default": "Instance Image ID"
+                },
+                "MasterInstanceType": {
+                    "default": "Instance Type"
+                }
+            }
+        }
+    },
+    "Parameters": {
+        "BucketName": {
+            "AllowedPattern": "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$",
+            "ConstraintDescription": "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).",
+            "Default": "test",
+            "Description": "Name of the bucket containing the templates",
+            "Type": "String"
+        },
+        "KeyPrefix": {
+            "AllowedPattern": "^[0-9a-zA-Z-/]*$",
+            "ConstraintDescription": "Key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
+            "Default": "test",
+            "Description": "S3 key prefix used to simulate a folder. This prefix can include numbers, lowercase letters, uppercase letters, hyphens, and forward slashes.",
+            "Type": "String"
+        },
+        "MasterVPCCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "172.20.0.0/16",
+            "Description": "CIDR block for the VPC",
+            "Type": "String"
+        },
+        "MasterPublicSubnetCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "172.20.10.0/24",
+            "Description": "CIDR block for the public DMZ subnet 1 located in Availability Zone 1",
+            "Type": "String"
+        },
+        "MasterPrivateSubnetCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "172.20.20.0/24",
+            "Description": "CIDR block for the public DMZ subnet 1 located in Availability Zone 1",
+            "Type": "String"
+        },
+        "MasterResourceName": {
+            "Default": "LoyLogic",
+            "Description": "Resource names for the services created.",
+            "Type": "String"
+        },
+        "MasterKeyPairName": {
+            "Description": "Enter a key pair.",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "MasterInstanceImageID": {
+            "Description": "Image ID for the OS to be utilised in the instance",
+            "Type": "String"
+        },
+        "MasterInstanceType": {
+            "Description": "EC2 instance type",
+            "Type": "String",
+            "Default": "t2.micro",
+            "AllowedValues": [
+                "t1.micro",
+                "t2.micro",
+                "t2.small",
+                "t2.medium",
+                "m1.small",
+                "m1.medium",
+                "m1.large",
+                "m1.xlarge",
+                "m2.xlarge",
+                "m2.2xlarge",
+                "m2.4xlarge",
+                "m3.medium",
+                "m3.large",
+                "m3.xlarge",
+                "m3.2xlarge",
+                "c1.medium",
+                "c1.xlarge",
+                "c3.large",
+                "c3.xlarge",
+                "c3.2xlarge",
+                "c3.4xlarge",
+                "c3.8xlarge",
+                "g2.2xlarge",
+                "r3.large",
+                "r3.xlarge",
+                "r3.2xlarge",
+                "r3.4xlarge",
+                "r3.8xlarge",
+                "i2.xlarge",
+                "i2.2xlarge",
+                "i2.4xlarge",
+                "i2.8xlarge",
+                "hi1.4xlarge",
+                "hs1.8xlarge",
+                "cr1.8xlarge",
+                "cc2.8xlarge",
+                "cg1.4xlarge"
+            ],
+            "ConstraintDescription": "must be a valid EC2 instance type."
+        }
+    },
+    "Resources": {
+        "VPCStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "Properties": {
+                "Parameters": {
+                    "VpcCIDR": {
+                        "Ref": "MasterVPCCIDR"
+                    },
+                    "PublicSubnetCIDR": {
+                        "Ref": "MasterPublicSubnetCIDR"
+                    },
+                    "PrivateSubnetCIDR": {
+                        "Ref": "MasterPrivateSubnetCIDR"
+                    },
+                    "ResourceName": {
+                        "Ref": "MasterResourceName"
+                    }
+                },
+                "TemplateURL": {
+                    "Fn::Sub": "https://${BucketName}.s3.amazonaws.com/${KeyPrefix}networking.json"
+                }
+            }
+        },
+        "EC2Stack": {
+            "DependsOn": [
+                "VPCStack"
+            ],
+            "Type": "AWS::CloudFormation::Stack",
+            "Properties": {
+                "Parameters": {
+                    "KeyPairName": {
+                        "Ref": "MasterKeyPairName"
+                    },
+                    "InstanceImageID": {
+                        "Ref": "MasterInstanceImageID"
+                    },
+                    "SecurityGroupID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.VPCSecurityGroup"
+                        ]
+                    },
+                    "JenkinsInstanceSubnetID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.PublicSubnetID"
+                        ]
+                    },
+                    "ApplicationInstanceSubnetID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.PrivateSubnetID"
+                        ]
+                    },
+                    "ResourceName": {
+                        "Ref": "MasterResourceName"
+                    },
+                    "InstanceType": {
+                        "Ref": "MasterInstanceType"
+                    }
+                },
+                "TemplateURL": {
+                    "Fn::Sub": "https://${BucketName}.s3.amazonaws.com/${KeyPrefix}instances.json"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "RedshfitConnectionURL": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "EC2Stack",
+                    "Outputs.WebsiteURL"
+                ]
+            }
+        }
+    }
+}
